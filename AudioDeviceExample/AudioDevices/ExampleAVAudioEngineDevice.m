@@ -86,6 +86,7 @@ static size_t kMaximumFramesPerBuffer = 3072;
 @property (nonatomic, strong) AVAudioEngine *playoutEngine;
 @property (nonatomic, strong) AVAudioPlayerNode *playoutFilePlayer;
 @property (nonatomic, strong) AVAudioUnitReverb *playoutReverb;
+@property (nonatomic, strong) AVAudioUnitEQ *playoutEQ;
 
 @property (nonatomic, strong) AVAudioEngine *recordEngine;
 @property (nonatomic, strong) AVAudioPlayerNode *recordFilePlayer;
@@ -300,12 +301,31 @@ static size_t kMaximumFramesPerBuffer = 3072;
         return NO;
     }
 
+    _playoutEQ = [[AVAudioUnitEQ alloc] initWithNumberOfBands:1];
+    _playoutEQ.bypass = NO;
+    NSArray *bands = _playoutEQ.bands;
+    AVAudioUnitEQFilterParameters *parameters = bands[0];
+    //NO enabled by
+    parameters.bypass = NO;
+    //AVAudioUnitEQFilterType
+    parameters.filterType = AVAudioUnitEQFilterTypeParametric;
+    //bandwidth (octave)
+    parameters.bandwidth = 1.0f;
+    //Frequency (Hz)
+    parameters.frequency = 1000.0f;
+    //decrement value (dB)
+    parameters.gain = 10.0f;
+    
+    
+    [_playoutEngine attachNode:_playoutEQ];
+    [_playoutEngine connect:_playoutEngine.inputNode to:_playoutEQ format:nil];
+    
     /*
      * In manual rendering mode, AVAudioEngine won't receive audio from the microhpone. Instead, it will receive the
      * audio data from the Voice SDK and mix it in MainMixerNode. Here we connect the input node to the main mixer node.
      * InputNode -> MainMixer -> OutputNode
      */
-    [_playoutEngine connect:_playoutEngine.inputNode to:_playoutEngine.mainMixerNode format:format];
+    [_playoutEngine connect:_playoutEQ to:_playoutEngine.mainMixerNode format:nil];
 
     /*
      * Attach AVAudioPlayerNode node to play music from a file.
