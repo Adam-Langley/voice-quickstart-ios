@@ -316,16 +316,17 @@ static size_t kMaximumFramesPerBuffer = 3072;
     //decrement value (dB)
     parameters.gain = 10.0f;
     
+    AVAudioFormat *sessionAudioFormat = [[AVAudioFormat alloc] initWithCommonFormat:AVAudioPCMFormatFloat32 sampleRate:sessionSampleRate channels:1 interleaved:false];
     
     [_playoutEngine attachNode:_playoutEQ];
-    [_playoutEngine connect:_playoutEngine.inputNode to:_playoutEQ format:nil];
+    [_playoutEngine connect:_playoutEngine.inputNode to:_playoutEQ format:sessionAudioFormat];
     
     /*
      * In manual rendering mode, AVAudioEngine won't receive audio from the microhpone. Instead, it will receive the
      * audio data from the Voice SDK and mix it in MainMixerNode. Here we connect the input node to the main mixer node.
      * InputNode -> MainMixer -> OutputNode
      */
-    [_playoutEngine connect:_playoutEQ to:_playoutEngine.mainMixerNode format:nil];
+    [_playoutEngine connect:_playoutEQ to:_playoutEngine.mainMixerNode format:sessionAudioFormat];
 
     /*
      * Attach AVAudioPlayerNode node to play music from a file.
